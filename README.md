@@ -99,11 +99,7 @@ The form collects the following information:
 
 No environment variables are currently required since countries are fetched from a public API.
 
-## Next Steps (Optional Future Features)
 
-* Add currency list from a public API using the same Context approach
-* Save submitted data to a real backend
-* Add loading spinners for better UX
 
 ## License
 
