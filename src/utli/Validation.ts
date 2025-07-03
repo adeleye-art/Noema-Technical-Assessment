@@ -3,6 +3,8 @@ import { FormData } from "./types/FromTypes";
 
 export type FormError = Partial<Record<keyof FormData, string>>;
 
+
+
 export function validateForm(formData: FormData): FormError {
   const errors: FormError = {};
 
@@ -44,10 +46,15 @@ export function validateForm(formData: FormData): FormError {
   // 3. Currency logic for OPEC countries
   if (!isEmpty(country) && !isEmpty(currency)) {
     const isOpec = OPEC_COUNTRIES.includes(country);
-    const enteredCurrency = currency.trim().toUpperCase();
-
-    if (isOpec && enteredCurrency !== "USD") {
-      errors.currency = `Currency must be USD for ${country} (OPEC member)`;
+    
+    if (isOpec) {
+      // Check if currency contains "US Dollar" or "United States Dollar" (case insensitive)
+      const isUSD = currency.toLowerCase().includes('us dollar') || 
+                    currency.toLowerCase().includes('united states dollar');
+      
+      if (!isUSD) {
+        errors.currency = `Currency must be USD for ${country} (OPEC member)`;
+      }
     }
   }
 

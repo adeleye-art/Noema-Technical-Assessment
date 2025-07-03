@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useCountries } from "@/context/CountryProvider";
+import { useCountries, useCurrencies } from "@/context/CountryProvider";
 import { submitRequest } from "@/services/api";
 import { OPEC_COUNTRIES } from "@/utli/constant";
 import { formatWithCommas } from "@/utli/Helper";
@@ -8,8 +8,6 @@ import { FormData } from "@/utli/types/FromTypes";
 import { FormError, validateForm } from "@/utli/Validation";
 import { useEffect, useState } from "react";
 import { FiCheckCircle, FiXCircle, FiInfo } from "react-icons/fi";
-
-
 
 export const FinancingForm = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -24,11 +22,14 @@ export const FinancingForm = () => {
   });
 
   const countries = useCountries();
+  const currencies = useCurrencies();
   const [errors, setErrors] = useState<FormError>({});
   const [displayAmount, setDisplayAmount] = useState<string>("");
   const [modalType, setModalType] = useState<"success" | "error" | null>(null);
   const [loading, setLoading] = useState(false);
 
+console.log(formData)
+  //handle General form changes
   const handleChange = (
     event: React.ChangeEvent<
       | HTMLFormElement
@@ -47,6 +48,8 @@ export const FinancingForm = () => {
     });
   };
 
+  //handle amount change and convert it to string for proper readability
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/,/g, "");
     if (!/^\d*$/.test(rawValue)) return;
@@ -63,14 +66,23 @@ export const FinancingForm = () => {
     });
   };
 
+  //handle country change
   const handleCountryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCountry = event.target.value;
     const isOpecMember = OPEC_COUNTRIES.includes(selectedCountry);
 
+    
+    const usdCurrency =
+      currencies.find(
+        (currency) =>
+          currency.toLowerCase().includes("us dollar") ||
+          currency.toLowerCase().includes("united states dollar")
+      ) || "USD";
+
     setFormData((prev) => ({
       ...prev,
       country: selectedCountry,
-      currency: isOpecMember ? "USD" : "",
+      currency: isOpecMember ? usdCurrency : "",
     }));
     setErrors((prev) => ({
       ...prev,
@@ -78,6 +90,8 @@ export const FinancingForm = () => {
     }));
   };
 
+
+//handle submission
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -103,7 +117,6 @@ export const FinancingForm = () => {
           currency: "",
         });
         setDisplayAmount("");
-
       } catch (error) {
         console.error("Submission failed:", error);
         setModalType("error");
@@ -129,6 +142,10 @@ export const FinancingForm = () => {
       return () => clearTimeout(timeout);
     }
   }, [modalType]);
+
+  //validate date, start date must be at least 15 days from today, 
+  // end date must be between 1 and 3 years after the start date, 
+
 
   const isFormComplete = (): boolean => {
     const allFilled = Object.values(formData).every(
@@ -355,9 +372,7 @@ export const FinancingForm = () => {
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  $
-                </span>
+                
                 <input
                   type="text"
                   name="amount"
@@ -377,19 +392,24 @@ export const FinancingForm = () => {
                 Currency
                 <span className="text-red-500 ml-1">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 name="currency"
                 value={formData.currency}
                 onChange={handleChange}
-                placeholder="USD, EUR, etc."
                 disabled={OPEC_COUNTRIES.includes(formData.country)}
                 className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   OPEC_COUNTRIES.includes(formData.country)
                     ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                     : ""
                 }`}
-              />
+              >
+                <option value="">Select Currency</option>
+                {currencies.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
               {OPEC_COUNTRIES.includes(formData.country) && (
                 <div className="text-xs text-gray-500 mt-1">
                   USD required for OPEC countries
